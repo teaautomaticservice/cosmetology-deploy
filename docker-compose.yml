@@ -1,3 +1,13 @@
+volumes:
+  build-user-app:
+  build-admin-panel:
+  debug:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./debug
+
 services:
   cosmetology-server:
     image: dahakalab/cosmetology-backend:latest
@@ -11,19 +21,44 @@ services:
       - cosmetology-server
     image: dahakalab/cosmetology-user-app:latest
     container_name: cosmetology-user-app
-    ports:
-      - 4000:4000
+    # environment:
+    #   - REACT_APP_API_URL: http://192.168.10.3:3000
     volumes:
-      - /app/node_modules
-      - ./:/app
+      - build-user-app:/app/build
 
   cosmetology-admin-panel:
     depends_on:
       - cosmetology-server
     image: dahakalab/cosmetology-admin-panel:latest
     container_name: cosmetology-admin-panel
-    ports:
-      - 5000:5000
+    # environment: 
+    #   - REACT_APP_API_URL: ${EXTERNAL_API_ADDRESS}
     volumes:
-      - /app/node_modules
-      - ./:/app
+      - build-admin-panel:/app/build
+
+  app-web-server:
+    depends_on:
+      - cosmetology-user-app
+    image: nginx:alpine
+    container_name: app-web-server
+    restart: always
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
+      - build-user-app:/usr/share/nginx/html:ro
+      - debug:/var/log/nginx
+
+  admin-web-server:
+    depends_on:
+      - cosmetology-admin-panel
+    image: nginx:alpine
+    restart: always
+    container_name: admin-web-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./nginx/admin.conf:/etc/nginx/conf.d/default.conf:ro
+      - build-admin-panel:/usr/share/nginx/html:ro
+      - debug:/var/log/nginx
+    
