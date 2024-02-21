@@ -1,6 +1,13 @@
 volumes:
   build-user-app:
   build-admin-panel:
+  pg-data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./pg-data
+  pgadmin-data:
   debug:
     driver: local
     driver_opts:
@@ -9,20 +16,42 @@ volumes:
       device: ./debug
 
 services:
+  postgres:
+    image: postgres
+    container_name: local_pgdb
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: dahakalab
+    env_file:
+      - .env.sds
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
   cosmetology-server:
     image: dahakalab/cosmetology-backend:latest
     container_name: cosmetology-server
     restart: always
     ports:
       - 3000:3000
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      POSTGRES_USER: dahakalab
+      DB_NAME: cosmetology
+    env_file:
+      - .env.sds
+    depends_on:
+      - postgres
 
   cosmetology-user-app:
     depends_on:
       - cosmetology-server
     image: dahakalab/cosmetology-user-app:latest
     container_name: cosmetology-user-app
-    # environment:
-    #   - REACT_APP_API_URL: http://192.168.10.3:3000
+    env_file:
+      - .env.front
     volumes:
       - build-user-app:/app/build
 
@@ -31,8 +60,8 @@ services:
       - cosmetology-server
     image: dahakalab/cosmetology-admin-panel:latest
     container_name: cosmetology-admin-panel
-    # environment: 
-    #   - REACT_APP_API_URL: ${EXTERNAL_API_ADDRESS}
+    env_file:
+      - .env.front
     volumes:
       - build-admin-panel:/app/build
 
@@ -61,4 +90,3 @@ services:
       - ./nginx/admin.conf:/etc/nginx/conf.d/default.conf:ro
       - build-admin-panel:/usr/share/nginx/html:ro
       - debug:/var/log/nginx
-    
