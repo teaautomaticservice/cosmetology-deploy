@@ -40,6 +40,7 @@ services:
       DB_PORT: 5432
       POSTGRES_USER: dahakalab
       DB_NAME: cosmetology
+      NODE_ENV: production
     env_file:
       - .env.sds
     depends_on:
