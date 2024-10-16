@@ -45,6 +45,8 @@ services:
       - .env.sds
     depends_on:
       - postgres
+    volumes:
+      - ./https:/app/https
 
   cosmetology-user-app:
     depends_on:
@@ -89,5 +91,6 @@ services:
       - "5000:5000"
     volumes:
       - ./nginx/admin.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./https:/etc/nginx/certificates:ro
       - build-admin-panel:/usr/share/nginx/html:ro
       - debug:/var/log/nginx
