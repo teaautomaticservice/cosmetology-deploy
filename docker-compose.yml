@@ -78,6 +78,7 @@ services:
       - "4000:4000"
     volumes:
       - ./nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./https:/etc/nginx/certificates:ro
       - build-user-app:/usr/share/nginx/html:ro
       - debug:/var/log/nginx
 
