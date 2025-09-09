@@ -15,6 +15,9 @@ volumes:
       type: none
       device: ./debug
 
+networks:
+  app-network:
+
 services:
   postgres:
     image: postgres:16
@@ -28,6 +31,19 @@ services:
       - .env.sds
     volumes:
       - pg-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  cache:
+    image: redis/redis-stack-server:latest
+    container_name: cache
+    restart: always
+    environment:
+      - "REDIS_ARGS=--enable-debug-command yes --enable-module-command yes"
+    env_file:
+      - .env.sds
+    networks:
+      - app-network
 
   cosmetology-server:
     image: dahakalab/cosmetology-backend:latest
@@ -41,12 +57,17 @@ services:
       POSTGRES_USER: dahakalab
       DB_NAME: cosmetology
       NODE_ENV: production
+      REDIS_HOST: cache
+      REDIS_PORT: 6379
     env_file:
       - .env.sds
     depends_on:
       - postgres
+      - cache
     volumes:
       - ./https:/app/https
+    networks:
+      - app-network
 
   cosmetology-user-app:
     depends_on:
